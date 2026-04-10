@@ -27,8 +27,8 @@ A production-ready Python + Streamlit application that takes any scientific pape
 
 ```bash
 # 1. Clone the repository
-git clone https://github.com/ashishSoni1234/scientific-paper-extractor.git
-cd scientific-paper-extractor
+git clone https://github.com/ashishSoni1234/scientific-paper-extractor-.git
+cd scientific-paper-extractor-
 
 # 2. Create a virtual environment
 python -m venv venv
