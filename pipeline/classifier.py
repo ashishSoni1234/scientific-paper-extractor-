@@ -112,33 +112,48 @@ def _classify_with_llm(text: str, groq_client=None, api_key: Optional[str] = Non
         from groq import Groq
         groq_client = Groq(api_key=api_key)
 
+    max_retries = 3
+    last_error = None
     prompt = CLASSIFICATION_PROMPT.format(text=text[:1000])
-    completion = groq_client.chat.completions.create(
-        model="llama-3.1-8b-instant",
-        messages=[{"role": "user", "content": prompt}],
-        temperature=0.1,
-        max_tokens=200,
-        timeout=8,
-    )
 
-    raw_content = completion.choices[0].message.content.strip()
+    for attempt in range(max_retries):
+        try:
+            completion = groq_client.chat.completions.create(
+                model="llama-3.1-8b-instant",
+                messages=[{"role": "user", "content": prompt}],
+                temperature=0.1,
+                max_tokens=200,
+                timeout=30,
+            )
 
-    # Strip markdown fences
-    if raw_content.startswith("```"):
-        lines = raw_content.splitlines()
-        raw_content = "\n".join(lines[1:-1])
+            raw_content = completion.choices[0].message.content.strip()
 
-    parsed = json.loads(raw_content)
-    paper_type = parsed.get("type", "unknown").lower()
-    confidence = float(parsed.get("confidence", 0.75))
+            # Strip markdown fences
+            if raw_content.startswith("```"):
+                lines = raw_content.splitlines()
+                raw_content = "\n".join(lines[1:-1])
 
-    # Validate the type is one of the allowed values
-    valid_types = {"experimental", "review", "survey", "theoretical", "unknown"}
-    if paper_type not in valid_types:
-        paper_type = "unknown"
-        confidence = 0.5
+            parsed = json.loads(raw_content)
+            paper_type = parsed.get("type", "unknown").lower()
+            confidence = float(parsed.get("confidence", 0.75))
 
-    return {"type": paper_type, "confidence": confidence, "method": "llm"}
+            # Validate the type is one of the allowed values
+            valid_types = {"experimental", "review", "survey", "theoretical", "unknown"}
+            if paper_type not in valid_types:
+                paper_type = "unknown"
+                confidence = 0.5
+
+            return {"type": paper_type, "confidence": confidence, "method": "llm"}
+
+        except Exception as exc:
+            last_error = exc
+            logger.warning("LLM classification attempt %d failed: %s", attempt + 1, exc)
+            if attempt < max_retries - 1:
+                import time
+                time.sleep(1)
+            continue
+
+    raise Exception(f"LLM classification failed after {max_retries} attempts: {last_error}")
 
 
 def _classify_with_keywords(text: str) -> dict:
