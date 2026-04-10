@@ -90,7 +90,8 @@ def extract_knowledge(text: str, api_key: str, timeout: int = 60, model: str = "
         raise ExtractionError("groq library is required. Install with: pip install groq")
 
     if not api_key:
-        raise ExtractionError("Groq API key is missing. Set GROQ_API_KEY in your .env file.")
+        logger.error("API key is empty - cannot proceed with LLM extraction")
+        raise ExtractionError("Groq API key is missing. Set GROQ_API_KEY in Streamlit Secrets or .env file.")
 
     if len(text) > 15000:
         truncated_text = text[:10000] + "\n\n... [TEXT TRUNCATED] ...\n\n" + text[-5000:]
@@ -132,7 +133,7 @@ def extract_knowledge(text: str, api_key: str, timeout: int = 60, model: str = "
 
         except Exception as exc:
             last_error = exc
-            logger.warning("Groq attempt %d failed: %s", attempt + 1, exc)
+            logger.error("Groq attempt %d failed with exception [%s]: %s", attempt + 1, type(exc).__name__, str(exc)[:500])
             if attempt < max_retries - 1:
                 time.sleep(2)  # Wait 2 seconds before retry
             continue
