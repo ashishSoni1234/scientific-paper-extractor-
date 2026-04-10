@@ -106,6 +106,8 @@ def extract_knowledge(text: str, api_key: str, timeout: int = 60, model: str = "
 
     max_retries = 3
     last_error = None
+    
+    prompt = EXTRACTION_PROMPT_TEMPLATE.format(text=truncated_text)
 
     for attempt in range(max_retries):
         try:
