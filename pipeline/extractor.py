@@ -97,9 +97,13 @@ def extract_knowledge(text: str, api_key: str, timeout: int = 60, model: str = "
     else:
         truncated_text = text
         
-    prompt = EXTRACTION_PROMPT_TEMPLATE.format(text=truncated_text)
+    try:
+        from groq import Groq
+        client = Groq(api_key=api_key)
+    except Exception as exc:
+        logger.error("Failed to initialize Groq client: %s", exc)
+        raise ExtractionError(f"Groq Client Init Failed: {exc}")
 
-    client = Groq(api_key=api_key)
     max_retries = 3
     last_error = None
 
