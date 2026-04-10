@@ -65,7 +65,7 @@ class ExtractionError(Exception):
     """Raised when the LLM extraction step fails irrecoverably."""
 
 
-def extract_knowledge(text: str, api_key: str, timeout: int = 10, model: str = "llama-3.1-8b-instant") -> dict:
+def extract_knowledge(text: str, api_key: str, timeout: int = 60, model: str = "llama-3.1-8b-instant") -> dict:
     """
     Extract structured knowledge from scientific paper text using the Groq LLM.
 
@@ -99,33 +99,40 @@ def extract_knowledge(text: str, api_key: str, timeout: int = 10, model: str = "
         
     prompt = EXTRACTION_PROMPT_TEMPLATE.format(text=truncated_text)
 
-    try:
-        client = Groq(api_key=api_key)
-        start_time = time.time()
+    client = Groq(api_key=api_key)
+    max_retries = 3
+    last_error = None
 
-        completion = client.chat.completions.create(
-            model=model,
-            messages=[{"role": "user", "content": prompt}],
-            temperature=0.1,
-            max_tokens=1024,
-            timeout=timeout,
-        )
+    for attempt in range(max_retries):
+        try:
+            start_time = time.time()
+            completion = client.chat.completions.create(
+                model=model,
+                messages=[{"role": "user", "content": prompt}],
+                temperature=0.1,
+                max_tokens=1024,
+                timeout=timeout,
+            )
 
-        elapsed = time.time() - start_time
-        logger.info("Groq extraction completed in %.2f seconds", elapsed)
+            elapsed = time.time() - start_time
+            logger.info("Groq extraction completed in %.2f seconds (Attempt %d)", elapsed, attempt + 1)
 
-        raw_content = completion.choices[0].message.content
-        if not raw_content:
-            raise ExtractionError("Groq returned an empty response.")
+            raw_content = completion.choices[0].message.content
+            if not raw_content:
+                raise ExtractionError("Groq returned an empty response.")
 
-        extracted = _parse_llm_json(raw_content)
-        return extracted
+            extracted = _parse_llm_json(raw_content)
+            return extracted
 
-    except ExtractionError:
-        raise
-    except Exception as exc:
-        logger.error("Groq extraction failed: %s", exc)
-        raise ExtractionError(f"Groq API call failed: {exc}") from exc
+        except Exception as exc:
+            last_error = exc
+            logger.warning("Groq attempt %d failed: %s", attempt + 1, exc)
+            if attempt < max_retries - 1:
+                time.sleep(2)  # Wait 2 seconds before retry
+            continue
+
+    logger.error("All %d Groq extraction attempts failed. Last error: %s", max_retries, last_error)
+    raise ExtractionError(f"Groq API call failed after {max_retries} attempts: {last_error}")
 
 
 def _parse_llm_json(raw_content: str) -> dict:
