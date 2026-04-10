@@ -223,3 +223,54 @@ python -m pytest tests/ --cov=pipeline --cov=utils --cov-report=term-missing
 ## 📄 License
 
 MIT License. See [LICENSE](LICENSE) for details.
+
+---
+
+## 🎥 Interviewer Demo Walkthrough
+
+This app supports **3 input channels** for scientific knowledge extraction:
+
+1. **Upload PDF**
+2. **ArXiv ID**
+3. **Paste Text**
+
+For this demo, we choose the **ArXiv ID** workflow and run extraction on a real research paper.
+
+### Step 1: Open App and Choose ArXiv ID Channel
+
+![Step 1 - Choose ArXiv Input](assets/demo/step-1-arxiv-input.png)
+
+The user opens the app, selects the **ArXiv ID** tab, and enters the paper identifier.
+
+### Step 2: Start Knowledge Extraction
+
+![Step 2 - Trigger Extraction](assets/demo/step-2-run-extraction.png)
+
+The pipeline starts and performs parsing, LLM extraction, paper classification, embedding generation, and similarity search.
+
+### Step 3: Review Structured Scientific Insights
+
+![Step 3 - Extracted Insights](assets/demo/step-3-structured-insights.png)
+
+The app returns a clean, structured view of:
+
+1. Materials
+2. Properties
+3. Methods
+4. Key Findings
+5. Numerical Results
+6. Applications
+
+### Step 4: Similar Papers + Export Options
+
+![Step 4 - Similar Papers and Export](assets/demo/step-4-similar-and-export.png)
+
+The user can review semantically similar papers and export results in multiple formats:
+
+1. JSON
+2. Markdown
+3. CSV
+
+### Demo Summary
+
+In under a few seconds, the system transforms an unstructured research paper into interviewer-ready structured intelligence with traceable outputs and downloadable artifacts.
