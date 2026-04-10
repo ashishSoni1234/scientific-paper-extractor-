@@ -631,7 +631,12 @@ def render_results(result: dict):
 
 def main():
     """Main application entry point."""
-    groq_api_key = os.getenv("GROQ_API_KEY", "")
+    # Try st.secrets first (Streamlit Cloud), fall back to os.getenv (local)
+    try:
+        groq_api_key = st.secrets.get("GROQ_API_KEY", "")
+    except:
+        groq_api_key = os.getenv("GROQ_API_KEY", "")
+    
     demo_mode = render_sidebar(groq_api_key)
 
     # ── Hero header ────────────────────────────────────────────────────────────
